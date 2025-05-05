@@ -8,14 +8,14 @@ enum layers {
     NUM,
     NMX,
     SYS,
-    PDS,
+    PLR,
     SYM,
     SMX,
     NAV,
     TAB,
 };
 
-#define TOP_G LT(PDS,KC_G)
+#define TOP_G LT(PLR,KC_G)
 #define TOP_F LT(TAB,KC_F)
 #define TOP_Y LT(NMX,KC_Y)
 #define TOP_O LT(SMX,KC_O)
@@ -55,18 +55,21 @@ enum custom_keycodes {
     // Macros.
     XCH,
     PHA,
-    MKT,
+    ONF,
     INF,
 
-    PD_DF,
-    PD_SER,
-    PD_TS,
-    PD_TD,
+    PL_DF,
+    PL_LF,
+    PL_SER,
 
-    PD_IDX,
-    PD_QCUT,
     GROUPBY,
-    DROPNA,
+    COLLECT,
+    SELECT,
+    FILTER,
+
+    W_COLS,
+    PL_COL,
+    ALIAS,
 
     TM_NXTW,
     TM_PRVW,
@@ -81,9 +84,6 @@ enum custom_keycodes {
     VIM_Q,
     VIM_WQ,
     VIM_W,
-
-    LOGIN,
-    EMAIL,
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -110,15 +110,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [SYS] = LAYOUT_split_3x6_3(
         _______, _______, _______, _______, _______, QK_BOOT,                   XXXXXXX, KC_MUTE, KC_VOLD, KC_VOLU, XXXXXXX, _______,
-        _______, _______, _______, _______, _______, _______,                   _______, XCH,     PHA,     MKT,     INF,     _______,
+        _______, _______, _______, _______, _______, _______,                   _______, XCH,     PHA,     ONF,     INF,     _______,
         _______, _______, _______, _______, _______, _______,                   XXXXXXX, KC_PSCR, KC_BRID, KC_BRIU, XXXXXXX, _______,
                                             _______, _______, _______, _______, _______, _______
     ),
 
-    [PDS] = LAYOUT_split_3x6_3(
-        _______, _______, _______, _______, _______, _______,                   XXXXXXX, GROUPBY, DROPNA,  PD_QCUT, XXXXXXX, _______,
-        _______, _______, _______, _______, _______, _______,                   _______, PD_DF,   PD_SER,  PD_TS,   PD_TD,   _______,
-        _______, _______, _______, _______, _______, _______,                   XXXXXXX, PD_IDX,  LOGIN,   EMAIL,   XXXXXXX, _______,
+    [PLR] = LAYOUT_split_3x6_3(
+        _______, _______, _______, _______, _______, _______,                   XXXXXXX, W_COLS,  PL_COL,  ALIAS,   XXXXXXX, _______,
+        _______, _______, _______, _______, _______, _______,                   _______, PL_DF,   PL_LF,   PL_SER,  FILTER,  _______,
+        _______, _______, _______, _______, _______, _______,                   XXXXXXX, GROUPBY, COLLECT, SELECT,  XXXXXXX, _______,
                                             _______, _______, _______, _______, _______, _______
     ),
 
@@ -199,7 +199,7 @@ void cw_prep(uint16_t keycode) {
 }
 
 uint16_t get_magic_keycode(uint16_t keycode) {
-    if (IS_LAYER_ON(PDS) || IS_LAYER_ON(SYS)) {
+    if (IS_LAYER_ON(PLR) || IS_LAYER_ON(SYS)) {
         switch (keycode) {
             case KC_1 ... KC_0:
             case KC_DQUO:
@@ -266,6 +266,7 @@ uint16_t get_magic_keycode(uint16_t keycode) {
         case KC_P:
             return KC_B;
         case KC_O:
+        case KC_COMM:
             return KC_A;
         case KC_A:
             return KC_COMM;
@@ -288,11 +289,6 @@ uint16_t get_magic_keycode(uint16_t keycode) {
             cw_tap(KC_T);
             cw_tap(KC_H);
             return KC_E;
-        case KC_COMM:
-            cw_tap(KC_SPC);
-            cw_tap(KC_A);
-            cw_tap(KC_N);
-            return KC_D;
         case KC_BSPC:
             return KC_ESC;
         case KC_ENT:
@@ -397,37 +393,44 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
             case PHA:
                 SEND_STRING("pha");
                 return true;
-            case MKT:
-                SEND_STRING("mkt");
+            case ONF:
+                SEND_STRING("onf");
                 return true;
             case INF:
                 SEND_STRING("inf");
                 return true;
 
-            case PD_DF:
-                SEND_STRING("pd.DataFrame");
+            case PL_DF:
+                SEND_STRING("pl.DataFrame");
                 return true;
-            case PD_SER:
-                SEND_STRING("pd.Series");
+            case PL_LF:
+                SEND_STRING("pl.LazyFrame");
                 return true;
-            case PD_TS:
-                SEND_STRING("pd.Timestamp");
-                return true;
-            case PD_TD:
-                SEND_STRING("pd.Timedelta");
+            case PL_SER:
+                SEND_STRING("pl.Series");
                 return true;
 
-            case PD_IDX:
-                SEND_STRING("pd.Index");
-                return true;
-            case PD_QCUT:
-                SEND_STRING("pd.qcut");
-                return true;
             case GROUPBY:
-                SEND_STRING("groupby");
+                SEND_STRING(".group_by(");
                 return true;
-            case DROPNA:
-                SEND_STRING("dropna");
+            case COLLECT:
+                SEND_STRING(".collect(");
+                return true;
+            case SELECT:
+                SEND_STRING(".select(");
+                return true;
+            case FILTER:
+                SEND_STRING(".filter(");
+                return true;
+
+            case W_COLS:
+                SEND_STRING(".with_columns(");
+                return true;
+            case PL_COL:
+                SEND_STRING("pl.col(");
+                return true;
+            case ALIAS:
+                SEND_STRING(".alias(");
                 return true;
 
             case TM_NXTW:
@@ -473,13 +476,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
             case VIM_W:
                 SEND_STRING("\e" SS_DELAY(40) ":w\n");
                 return true;
-
-            case LOGIN:
-                SEND_STRING("david.j.amirault");
-                return true;
-            case EMAIL:
-                SEND_STRING("@gmail.com");
-                return true;
         }
 
         if (is_tapped) {
@@ -502,7 +498,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                 unregister_code16(magic_keycode);
                 return true;
             case CAPSWRD:
-            case XCH ... EMAIL:
+            case XCH ... VIM_W:
                 return true;
         }
 
@@ -519,13 +515,13 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case THMB_SP:
         case THMB_BS:
-            return TAPPING_TERM - 20;
+            return TAPPING_TERM - 32;
         case BOTM_D:
         case BOTM_H:
             return TAPPING_TERM + 40;
         default:
             // Increase tapping term if a key was pressed recently.
-            if (timer_elapsed(press_timer) < TAPPING_TERM) {
+            if (timer_elapsed(press_timer) < TAPPING_TERM - 32) {
                 return TAPPING_TERM + 40;
             }
             return TAPPING_TERM;
