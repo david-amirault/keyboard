@@ -515,14 +515,14 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case THMB_SP:
         case THMB_BS:
-            return TAPPING_TERM - 32;
+            return TAPPING_TERM - 20;
         case BOTM_D:
         case BOTM_H:
-            return TAPPING_TERM + 40;
+            return TAPPING_TERM + 25;
         default:
             // Increase tapping term if a key was pressed recently.
-            if (timer_elapsed(press_timer) < TAPPING_TERM - 32) {
-                return TAPPING_TERM + 40;
+            if (timer_elapsed(press_timer) < TAPPING_TERM - 20) {
+                return TAPPING_TERM + 25;
             }
             return TAPPING_TERM;
     }
