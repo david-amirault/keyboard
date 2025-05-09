@@ -53,10 +53,8 @@ enum custom_keycodes {
     MAGIC,
 
     // Macros.
-    XCH,
-    PHA,
-    ONF,
-    INF,
+    KM_NF,
+    KM_PH,
 
     PL_DF,
     PL_LF,
@@ -110,8 +108,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [SYS] = LAYOUT_split_3x6_3(
         _______, _______, _______, _______, _______, QK_BOOT,                   XXXXXXX, KC_MUTE, KC_VOLD, KC_VOLU, XXXXXXX, _______,
-        _______, _______, _______, _______, _______, _______,                   _______, XCH,     PHA,     ONF,     INF,     _______,
-        _______, _______, _______, _______, _______, _______,                   XXXXXXX, KC_PSCR, KC_BRID, KC_BRIU, XXXXXXX, _______,
+        _______, _______, _______, _______, _______, _______,                   _______, KM_NF,   KC_PLUS, KC_MINS, KC_COLN, _______,
+        _______, _______, _______, _______, _______, _______,                   XXXXXXX, KM_PH,   KC_BRID, KC_BRIU, XXXXXXX, _______,
                                             _______, _______, _______, _______, _______, _______
     ),
 
@@ -198,16 +196,11 @@ void cw_prep(uint16_t keycode) {
     }
 }
 
+bool magic_streak = false;
+
 uint16_t get_magic_keycode(uint16_t keycode) {
     if (IS_LAYER_ON(PLR) || IS_LAYER_ON(SYS)) {
-        switch (keycode) {
-            case KC_1 ... KC_0:
-            case KC_DQUO:
-            case KC_RPRN:
-                return KC_COLN;
-            default:
-                return KC_SLSH;
-        }
+        return KC_SLSH;
     }
 
     if (IS_LAYER_ON(NMX)) {
@@ -235,6 +228,9 @@ uint16_t get_magic_keycode(uint16_t keycode) {
             cw_tap(KC_E);
             return KC_N;
         case KC_C:
+            if (magic_streak) {
+                return KC_H;
+            }
             return KC_Q;
         case KC_Z:
         case KC_X:
@@ -300,9 +296,8 @@ uint16_t get_magic_keycode(uint16_t keycode) {
             return KC_RABK;
         case KC_RABK:
         case KC_LABK:
-            return KC_EQL;
         case KC_1 ... KC_0:
-            return KC_MINS;
+            return KC_EQL;
         case KC_LPRN:
             return KC_LBRC;
         case KC_LBRC:
@@ -383,21 +378,18 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
             case MAGIC:
                 prev_keycode = get_magic_keycode(prev_keycode);
                 magic_keycode = get_cw_keycode(prev_keycode);
+                magic_streak = true;
                 register_code16(magic_keycode);
                 return true;
 
             // Macros.
-            case XCH:
-                SEND_STRING("xch");
+            case KM_NF:
+                cw_tap(KC_N);
+                cw_tap(KC_F);
                 return true;
-            case PHA:
-                SEND_STRING("pha");
-                return true;
-            case ONF:
-                SEND_STRING("onf");
-                return true;
-            case INF:
-                SEND_STRING("inf");
+            case KM_PH:
+                cw_tap(KC_P);
+                cw_tap(KC_H);
                 return true;
 
             case PL_DF:
@@ -480,6 +472,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
 
         if (is_tapped) {
             prev_keycode = get_primary_keycode(keycode);
+            magic_streak = false;
             cw_prep(prev_keycode);
         }
 
@@ -498,7 +491,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                 unregister_code16(magic_keycode);
                 return true;
             case CAPSWRD:
-            case XCH ... VIM_W:
+            case KM_NF ... VIM_W:
                 return true;
         }
 
@@ -518,11 +511,11 @@ uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
             return TAPPING_TERM - 20;
         case BOTM_D:
         case BOTM_H:
-            return TAPPING_TERM + 25;
+            return TAPPING_TERM + 23;
         default:
             // Increase tapping term if a key was pressed recently.
             if (timer_elapsed(press_timer) < TAPPING_TERM - 20) {
-                return TAPPING_TERM + 25;
+                return TAPPING_TERM + 23;
             }
             return TAPPING_TERM;
     }
