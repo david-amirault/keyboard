@@ -265,6 +265,9 @@ uint16_t get_magic_keycode(uint16_t keycode) {
         case KC_COMM:
             return KC_A;
         case KC_A:
+            if (magic_streak) {
+                return KC_H;
+            }
             return KC_COMM;
         case KC_U:
         case KC_J:
